@@ -1,5 +1,6 @@
 use sha2::{Digest, Sha512};
 
+#[derive(Clone, Copy)]
 struct Pos {
     x: usize,
     y: usize,
@@ -56,16 +57,48 @@ pub fn to_art(input: &[u8], width: usize, height: usize) -> Result<String, &'sta
             canvas[pos.y][pos.x] += 1;
         }
     }
-    Ok(canvas
+    let mut chars = canvas
         .into_iter()
-        .flat_map(|row| {
+        .map(|row| {
             row.into_iter()
+                // Same characters as OpenSSH
                 .map(|c| {
                     ([
                         ' ', '.', 'o', '+', '=', '*', 'B', '0', 'X', '@', '%', '&', '#', '/', '^',
                     ])[(c % 14) as usize]
                 })
-                .chain(['\n'])
+                .collect()
         })
-        .collect::<String>())
+        .collect::<Vec<Vec<char>>>();
+    chars[init_pos.y][init_pos.x] = 'S';
+
+    Ok(chars
+        .into_iter()
+        .flat_map(|row| row.into_iter().chain(['\n']))
+        .collect())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    // Visual test for dissimilarity
+    // The only difference between the tests is a single addition/modification of a character
+    #[test]
+    fn test_1() {
+        let res = to_art(b"Testing testing", 20, 20).unwrap();
+        assert_eq!(res.len(), 20 * (20 + 1)); // newlines
+        print!("{}", &res);
+    }
+    #[test]
+    fn test_2() {
+        let res = to_art(b"Testing testing ", 20, 20).unwrap();
+        assert_eq!(res.len(), 20 * (20 + 1)); // newlines
+        print!("{}", &res);
+    }
+    #[test]
+    fn test_3() {
+        let res = to_art(b"Testin' testing", 20, 20).unwrap();
+        assert_eq!(res.len(), 20 * (20 + 1)); // newlines
+        print!("{}", &res);
+    }
 }
